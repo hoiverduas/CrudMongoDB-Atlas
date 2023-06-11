@@ -1,0 +1,6 @@
+spring:
+  data:
+    mongodb:
+      uri :  mongodb+srv://hoiver75:Rubio_456123@hoiver.efyx9rh.mongodb.net/?retryWrites=true&w=majority
+
+      database : User
