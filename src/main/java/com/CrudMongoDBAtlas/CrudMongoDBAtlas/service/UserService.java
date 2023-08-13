@@ -1,69 +1,64 @@
 package com.CrudMongoDBAtlas.CrudMongoDBAtlas.service;
 
+import com.CrudMongoDBAtlas.CrudMongoDBAtlas.dto.UserDto;
 import com.CrudMongoDBAtlas.CrudMongoDBAtlas.entity.User;
 import com.CrudMongoDBAtlas.CrudMongoDBAtlas.repository.IUserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+
 @Service
-public class UserService {
+public class UserService implements IUserService {
 
     @Autowired
-    private IUserRepository iUserRepository;
+    private IUserRepository userRepository;
 
-    public User aadUser(User user){
-
-        return iUserRepository.save(user);
+    public UserService(IUserRepository userRepository) {
+        this.userRepository = userRepository;
     }
 
-    public List<User> findAllUser(){
+    public User addUser(User user){
 
-        return iUserRepository.findAll();
+        return userRepository.save(user);
     }
 
-    public User getUserById(Integer userId ){
+    public List<UserDto> findAllUser(){
 
-        return iUserRepository.findById(userId).get();
+        List<User> userList = userRepository.findAll();
+        List<UserDto> userDTOList = userList.stream().map(user -> {
+            UserDto userDto = new UserDto(user.getUserName(), user.getUserLastName(), user.getUserEmail(), user.getUserAge(), user.getUserGender());
+            return userDto;
+        })
+                .collect(Collectors.toList());
+
+        return userDTOList;
     }
 
-    public List<User> filterUsersByProperty(String filter, Object value) {
-        List<User> filteredUsers = new ArrayList<>();
+    public UserDto getUserById(Integer userId){
 
-        switch (filter.toLowerCase()) {
-            case "username":
-                filteredUsers = iUserRepository.findByUserName((String  ) value);
-                break;
-            case "userlastname":
-                filteredUsers = iUserRepository.findByUserLastName((String) value);
-                break;
-            case "useremail":
-                filteredUsers = iUserRepository.findByUserEmail((String) value);
-                break;
-            case "userage":
-                filteredUsers = iUserRepository.findByUserAge((Integer) value);
-                break;
-            case "usergender":
-                filteredUsers = iUserRepository.findByUserGender((String) value);
-                break;
-            case "userpassword":
-                filteredUsers = iUserRepository.findByUserPassword((Integer) value);
-                break;
-            default:
-                System.out.println("Propiedad no válida.");
-                break;
-        }
+        User user = userRepository.findById(userId).get();
+        UserDto userDto = new UserDto(user.getUserName(),user.getUserLastName(),user.getUserEmail(),user.getUserAge(), user.getUserGender());
 
-        return filteredUsers;
+        return userDto;
+    }
+
+    public List<UserDto> filterUsersByCriteria(String userName, String userLastName, String userEmail, Integer userAge, String userGender) {
+        return userRepository.findAll().stream()
+                .filter(user -> userName == null || user.getUserName().equals(userName))
+                .filter(user -> userLastName == null || user.getUserLastName().equals(userLastName))
+                .filter(user -> userEmail == null || user.getUserEmail().equals(userEmail))
+                .filter(user -> userAge == null || user.getUserAge().equals(userAge))
+                .filter(user -> userGender == null || user.getUserGender().equals(userGender))
+                .map(user -> new UserDto(user.getUserName(), user.getUserLastName(), user.getUserEmail(), user.getUserAge(), user.getUserGender()))
+                .collect(Collectors.toList());
     }
 
   public User UpdateUser(User userRequest){
 
-        User existingUser = iUserRepository.findById(userRequest.getUserId()).get();
+        User existingUser = userRepository.findById(userRequest.getUserId()).get();
              existingUser.setUserName(userRequest.getUserName());
              existingUser.setUserLastName(userRequest.getUserLastName());
              existingUser.setUserEmail(userRequest.getUserEmail());
@@ -71,13 +66,13 @@ public class UserService {
              existingUser.setUserGender(userRequest.getUserGender());
              existingUser.setUserPassword(userRequest.getUserPassword());
 
-             return iUserRepository.save(existingUser);
+             return userRepository.save(existingUser);
   }
 
 
   public Integer deleterUser(Integer userId){
 
-        iUserRepository.deleteById(userId);
+      userRepository.deleteById(userId);
 
         return userId;
   }
